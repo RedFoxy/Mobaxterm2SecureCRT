@@ -1,0 +1,146 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+# ==============================================================================
+#  MobaXterm to SecureCRT Session Converter
+#  Version: v1.0.0
+#  Date:    26/01/2026
+#  Author:  Massimo "RedFoxy Darrest" Cicciò
+#  Website: https://redfoxy.eu
+#  GitHub:  https://github.com/RedFoxy
+#
+#  License: Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)
+#  You are free to share and adapt this work for non-commercial purposes,
+#  provided you give appropriate credit to the original author.
+# ==============================================================================
+
+import os
+import sys
+
+# =============================================================================
+#   CONFIGURATION SECTION
+# =============================================================================
+
+# File names
+INPUT_FILE = "MobaXterm Sessions.mxtsessions"
+OUTPUT_FILE = "sessions_converted.csv"
+
+# --- USERNAME MAPPING RULES ---
+# Define the text to search for within the session line and the username to apply.
+# Format: "Text to search": "Username to apply"
+# The script checks these rules in order. The first match wins.
+USER_RULES = {
+    "[Moba_User1]": "username1",
+    "[Moba_User2]": "username2",
+    # Add more rules here if needed, e.g.:
+    # "[Production]": "root",
+}
+
+# =============================================================================
+#   END CONFIGURATION
+# =============================================================================
+
+def main():
+    print("\n" + "="*60)
+    print(" MobaXterm to SecureCRT Converter v1.0.0")
+    print(f" Author: Massimo 'RedFoxy Darrest' Ciccio - https://redfoxy.eu")
+    print("="*60 + "\n")
+    
+    # 1. Ask for default username
+    try:
+        default_user = input("Enter default username (for sessions not matching rules): ").strip()
+        if not default_user:
+            print("Error: Username cannot be empty.")
+            return
+    except KeyboardInterrupt:
+        print("\nOperation cancelled.")
+        return
+
+    # 2. Check input file
+    if not os.path.exists(INPUT_FILE):
+        print(f"\n[!] Error: Input file '{INPUT_FILE}' not found.")
+        print("    Please export your sessions from MobaXterm, rename the file,")
+        print("    and place it in this directory.")
+        return
+    
+    current_path = ""
+    total_sessions = 0
+    converted_sessions = 0
+
+    print(f"\n[*] Processing file: {INPUT_FILE}...")
+
+    try:
+        with open(INPUT_FILE, 'r', encoding='utf-8', errors='ignore') as f_in, \
+             open(OUTPUT_FILE, 'w', encoding='utf-8') as f_out:
+
+            # Note: No CSV header is written to allow direct mapping in SecureCRT.
+
+            for line in f_in:
+                line = line.strip()
+                
+                # Skip empty lines
+                if not line:
+                    continue
+
+                # Parse Directory (SubRep)
+                if line.startswith("SubRep="):
+                    current_path = line.split("=", 1)[1]
+                    continue
+
+                # Skip sections headers or metadata
+                if line.startswith("[") or line.startswith("ImgNum="):
+                    continue
+
+                # Count total potential sessions (any line with an equals sign)
+                if "=" in line:
+                    total_sessions += 1
+
+                # Process only SSH sessions (Identified by code #109#0%)
+                if "=#109#0%" in line:
+                    converted_sessions += 1
+                    
+                    # Split Session Name and Data
+                    parts = line.split("=#109#0%")
+                    session_name = parts[0]
+                    data_part = parts[1]
+
+                    # Extract Hostname (first field after ID)
+                    hostname = data_part.split("%")[0]
+
+                    # Determine Username based on INTERNAL DICTIONARY
+                    final_user = default_user
+                    for keyword, specific_user in USER_RULES.items():
+                        if keyword in line:
+                            final_user = specific_user
+                            break # Stop at first match found
+
+                    # Write to CSV
+                    # Format: {hostname},SSH2,{username},{path},{session_name}
+                    f_out.write(f"{hostname},SSH2,{final_user},{current_path},{session_name}\n")
+
+    except IOError as e:
+        print(f"[!] File error: {e}")
+        return
+
+    # Final Report
+    print("\n" + "="*60)
+    print(" CONVERSION COMPLETED SUCCESSFULLY")
+    print("="*60)
+    print(f" Output File:        {OUTPUT_FILE}")
+    print(f" Total sessions read: {total_sessions}")
+    print(f" Converted (SSH):     {converted_sessions}")
+    print("-" * 60)
+    print(" INSTRUCTIONS FOR SECURECRT IMPORT:")
+    print(" 1. Open SecureCRT and go to File > Import...")
+    print(" 2. Select 'Text file (.csv, .txt, ...)' as source.")
+    print(" 3. Select the file generated by this script.")
+    print(" 4. Map the fields in this EXACT order:")
+    print("    1) Hostname")
+    print("    2) Protocol")
+    print("    3) Username")
+    print("    4) Folder")
+    print("    5) Session Name")
+    print("="*60 + "\n")
+
+if __name__ == "__main__":
+    main()
