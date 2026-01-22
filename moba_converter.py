@@ -3,7 +3,7 @@
 
 # ==============================================================================
 #  MobaXterm to SecureCRT Session Converter
-#  Version: v1.0.0
+#  Version: v1.0.1
 #  Date:    26/01/2026
 #  Author:  Massimo "RedFoxy Darrest" Cicciò
 #  Website: https://redfoxy.eu
@@ -42,7 +42,7 @@ USER_RULES = {
 
 def main():
     print("\n" + "="*60)
-    print(" MobaXterm to SecureCRT Converter v1.0.0")
+    print(" MobaXterm to SecureCRT Converter v1.0.1")
     print(f" Author: Massimo 'RedFoxy Darrest' Ciccio - https://redfoxy.eu")
     print("="*60 + "\n")
     
@@ -73,7 +73,8 @@ def main():
         with open(INPUT_FILE, 'r', encoding='utf-8', errors='ignore') as f_in, \
              open(OUTPUT_FILE, 'w', encoding='utf-8') as f_out:
 
-            # Note: No CSV header is written to allow direct mapping in SecureCRT.
+            # Write Header to show in SecureCRT
+            f_out.write("hostname,protocol,username,folder,session_name\n\n")
 
             for line in f_in:
                 line = line.strip()
