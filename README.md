@@ -1,6 +1,6 @@
 # MobaXterm to SecureCRT Session Converter
 
-![Version](https://img.shields.io/badge/version-v1.0.0-blue.svg)
+![Version](https://img.shields.io/badge/version-v1.0.1-blue.svg)
 ![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)
 
 A lightweight and efficient Python utility designed to migrate SSH sessions from **MobaXterm** to **VanDyke SecureCRT**.
